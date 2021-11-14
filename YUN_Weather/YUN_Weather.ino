@@ -33,10 +33,10 @@ char date[20], hour_minute_sec[20];
 WiFiClient client;
 
 //ユーザーによって変更する必要のあるもの
-#define WIFI_SSID "necobitWi-Fi2.4" //Wi-FiのSSID
-#define WIFI_PASS "AcauZR2Nwq9axR" //Wi-Fiのパスワード
+#define WIFI_SSID "******" //Wi-FiのSSID
+#define WIFI_PASS "******" //Wi-Fiのパスワード
 
-#define LOCATE "140010" //地域コード(https://weather.tsukumijima.net/primary_area.xml)より6桁の数字
+#define LOCATE "130010" //地域コード(https://weather.tsukumijima.net/primary_area.xml)より6桁の数字
 //ここまで
 
 const char *ssid = WIFI_SSID;
