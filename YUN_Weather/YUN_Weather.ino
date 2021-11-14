@@ -2,6 +2,7 @@
 // Adafruit_BMP280 lib in Sketch->Includ Library->Library Manager
 
 #include <M5StickCPlus.h>
+#include "icon.h"
 
 #define LGFX_AUTODETECT
 #define LGFX_USE_V1
@@ -32,10 +33,10 @@ char date[20], hour_minute_sec[20];
 WiFiClient client;
 
 //ユーザーによって変更する必要のあるもの
-#define WIFI_SSID "******" //Wi-FiのSSID
-#define WIFI_PASS "******" //Wi-Fiのパスワード
+#define WIFI_SSID "necobitWi-Fi2.4" //Wi-FiのSSID
+#define WIFI_PASS "AcauZR2Nwq9axR" //Wi-Fiのパスワード
 
-#define LOCATE "130010" //地域コード(https://weather.tsukumijima.net/primary_area.xml)より6桁の数字
+#define LOCATE "140010" //地域コード(https://weather.tsukumijima.net/primary_area.xml)より6桁の数字
 //ここまで
 
 const char *ssid = WIFI_SSID;
@@ -67,6 +68,9 @@ uint16_t light;
 extern uint8_t  lightR;
 extern uint8_t  lightG;
 extern uint8_t  lightB;
+uint8_t light_flag = 1;
+
+String disp_weather;
 
 boolean tt = false;
 
@@ -140,6 +144,7 @@ void get_weather_data() {
   }
 
   http.end(); //Free the resources
+  drawWeather();
 }
 
 
@@ -148,6 +153,96 @@ void get_time() {
   sprintf(date, "%04d/%02d/%02d ", timeInfo.tm_year + 1900, timeInfo.tm_mon + 1, timeInfo.tm_mday); //日付に変換
   sprintf(hour_minute_sec, "%02d:%02d:%02d", timeInfo.tm_hour, timeInfo.tm_min, timeInfo.tm_sec); //時間に変換
   now_hour = timeInfo.tm_hour;
+}
+
+void drawWeather() {
+
+  lcd.setFont(&fonts::lgfxJapanGothic_16);
+
+  lcd.setCursor(5, 25 + 25);
+  lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+
+  if (tt == false) {
+    disp_weather = now_weather;
+    lcd.setTextColor(0xFFFF00U, 0x000000U);
+    lcd.print("今日:");
+    lcd.setTextColor(0xFFFFFFU, 0x000000U);
+    lcd.print(now_weather);
+    lcd.print("    ");
+  }
+  else {
+    disp_weather = tom_weather;
+    lcd.setTextColor(0x0000FFU, 0x000000U);
+    lcd.print("明日:");
+    lcd.setTextColor(0xFFFFFFU, 0x000000U);
+    lcd.print(tom_weather);
+    lcd.print("    ");
+  }
+
+  lcd.setCursor(130, 25 + 20 + 50);
+
+  if (tt == false) {
+    lcd.print(now_temp);
+    lcd.print("  ");
+  }
+  else {
+    lcd.print(tom_temp);
+    lcd.print("  ");
+  }
+
+  lcd.fillRect(15, 90, 100, 40, BLACK);
+  if (disp_weather == "晴れ") {
+    lightR = 8;
+    lightG = 8;
+    lightB = 0;
+    lcd.startWrite();
+    lcd.pushImage(35, 90, imgWidth, imgHeight, img_hare);
+    lcd.endWrite();
+  }
+  else if (disp_weather == "雨") {
+    lightR = 0;
+    lightG = 0;
+    lightB = 10;
+    lcd.startWrite();
+    lcd.pushImage(35, 90, imgWidth, imgHeight, img_ame);
+    lcd.endWrite();
+  }
+  else if (disp_weather == "曇") {
+    lightR = 0;
+    lightG = 10;
+    lightB = 0;
+    lcd.startWrite();
+    lcd.pushImage(35, 90, imgWidth, imgHeight, img_kumori);
+    lcd.endWrite();
+  }
+  else if (disp_weather == "曇のち晴") {
+    lightR = 0;
+    lightG = 8;
+    lightB = 0;
+    lcd.startWrite();
+    lcd.pushImage(15, 90, imgWidth, imgHeight, img_kumori);
+    lcd.pushImage(60, 90, imgWidth, imgHeight, img_hare);
+    lcd.endWrite();
+  }
+  else if (disp_weather == "晴時々曇") {
+    lightR = 0;
+    lightG = 8;
+    lightB = 0;
+    lcd.startWrite();
+    lcd.pushImage(15, 90, imgWidth, imgHeight, img_hare);
+    lcd.pushImage(60, 90, imgWidth, imgHeight, img_kumori);
+    lcd.endWrite();
+  }
+  else if (disp_weather == "雪") {
+    lightR = 6;
+    lightG = 6;
+    lightB = 6;
+  }
+  else {
+    lightR = 0;
+    lightG = 8;
+    lightB = 0;
+  }
 }
 
 
@@ -174,21 +269,13 @@ void setup() {
   tickerWeatherUpdate.attach(900, get_weather_data);
   get_weather_data();
 
-
-
   /* Default settings from datasheet. */
   bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
                   Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
                   Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
                   Adafruit_BMP280::FILTER_X16,      /* Filtering. */
                   Adafruit_BMP280::STANDBY_MS_1000); /* Standby time. */
-
-  // put your setup code here, to run once:
-  //  display_light4();
 }
-
-uint8_t light_flag = 1;
-String disp_weather;
 
 void loop() {
 
@@ -217,66 +304,6 @@ void loop() {
     lcd.setCursor(140, 5 + 20);
     lcd.setTextColor(TFT_GREEN, TFT_BLACK);
     lcd.printf("%d hPa\r\n", int(pressure));
-
-    lcd.setFont(&fonts::lgfxJapanGothic_16);
-
-    lcd.setCursor(5, 25 + 25);
-    lcd.setTextColor(TFT_WHITE, TFT_BLACK);
-
-    if (tt == false) {
-      disp_weather = now_weather;
-      lcd.setTextColor(0xFFFF00U, 0x000000U);
-      lcd.print("今日:");
-      lcd.setTextColor(0xFFFFFFU, 0x000000U);
-      lcd.print(now_weather);
-      lcd.print("    ");
-    }
-    else {
-      disp_weather = tom_weather;
-      lcd.setTextColor(0x0000FFU, 0x000000U);
-      lcd.print("明日:");
-      lcd.setTextColor(0xFFFFFFU, 0x000000U);
-      lcd.print(tom_weather);
-      lcd.print("    ");
-    }
-
-    lcd.setCursor(120, 25 + 20 + 40);
-
-    if (tt == false) {
-      lcd.print(now_temp);
-      lcd.print("  ");
-
-    }
-    else {
-      lcd.print(tom_temp);
-      lcd.print("  ");
-    }
-
-    if (disp_weather == "晴れ") {
-      lightR = 8;
-      lightG = 8;
-      lightB = 0;
-    }
-    else if (disp_weather == "雨") {
-      lightR = 0;
-      lightG = 0;
-      lightB = 10;
-    }
-    else if (disp_weather == "曇") {
-      lightR = 0;
-      lightG = 10;
-      lightB = 0;
-    }
-    else if (disp_weather == "雪") {
-      lightR = 6;
-      lightG = 6;
-      lightB = 6;
-    }
-    else {
-      lightR = 0;
-      lightG = 10;
-      lightB = 0;
-    }
   }
   led_set_all(lightR << 16 | lightG << 8 | lightB);
 
@@ -284,6 +311,7 @@ void loop() {
 
   if (M5.BtnA.wasPressed()) {
     tt = !tt;
+    drawWeather();
   }
 
   delay(10);
